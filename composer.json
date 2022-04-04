@@ -1,0 +1,19 @@
+{
+    "name": "jordan/http-routes",
+    "description": "abstração de rotas http com url amigável",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "jordanAlmeida66",
+            "email": "jordansantos4254@gmail.com"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {},
+    "autoload" : {
+      "psr-4" : {
+        "HttpRoutes\\" :  "src/"
+      }
+    }
+}
