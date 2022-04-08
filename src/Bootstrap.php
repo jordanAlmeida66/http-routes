@@ -42,6 +42,7 @@ class Bootstrap
     
     //mapear as rota e substituir possiveis indices por regex
     $r = array_map(function($uri){ 
+      //filtro de entrada para parametros adcionais
       $preg = preg_match_all('/\/\{\??[a-z\-\_0-9]+\}/i', $uri, $matches);
       $arr = [];
 
@@ -50,17 +51,19 @@ class Bootstrap
         foreach(current($matches) as $key => $value){
           //argumento opcional
 
-          $r = preg_match('/^\/\{\?[a-z\-\_0-9]+\}$/i', $value);
+          $r = preg_match('/^\/\{\?.+\}$/i', $value);
 
           if ($r) {     
-            $arr[$value] = '/?([0-9a-zA-Zà-ú\-\+\.&%_]+)?';
+            $arr[$value] = '/?(.+)?';
+            //obs: validações e filtros devem ser realizados por conta própria
           }
 
           //argumento obrigatório
-          $r1 = preg_match('/^\/\{[a-z\-\_0-9)]+\}$/i', $value);
+          $r1 = preg_match('/^\/\{.+\}$/i', $value);
           
           if ($r1) {
-            $arr[$value] = '/([0-9a-zA-Zà-ú\-\+\.&%_]+)';
+            //obs: validações e filtros devem ser realizados por conta própria
+            $arr[$value] = '/(.+)';
           }
         }
 
