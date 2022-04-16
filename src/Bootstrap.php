@@ -49,22 +49,22 @@ class Bootstrap
       //Possui argumentos opcionais
       if($preg) {
         foreach(current($matches) as $key => $value){
-          //argumento opcional
-
+          
           $r = preg_match('/^\/\{\?.+\}$/i', $value);
 
-          if ($r) {     
+          if ($r) {
+            //argumento opcional     
             $arr[$value] = '/?(.+)?';
             //obs: validações e filtros devem ser realizados por conta própria
-          }
-
-          //argumento obrigatório
-          $r1 = preg_match('/^\/\{.+\}$/i', $value);
-          
-          if ($r1) {
-            //obs: validações e filtros devem ser realizados por conta própria
-            $arr[$value] = '/(.+)';
-          }
+          } else {
+            //argumento obrigatório
+            $r1 = preg_match('/^\/\{.+\}$/i', $value);
+            
+            if ($r1) {
+              //obs: validações e filtros devem ser realizados por conta própria
+              $arr[$value] = '/(.+)';
+            }
+          }          
         }
 
         foreach ($arr as $key => $value) {
