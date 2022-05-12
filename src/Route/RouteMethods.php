@@ -41,10 +41,13 @@ class RouteMethods
 
   public function get(&$routes, &$routes_name)
   {
-    $routes[$this->uri][$this->http_method] = $this->arr;
+    $uri = preg_replace('/^\//', '', $this->uri);
+    $uri = "/{$uri}"; 
+
+    $routes[$uri][$this->http_method] = $this->arr;
     
     if (!empty($this->name)) {
-      $routes_name[$this->name] = preg_replace('/\/\{.*/', '' , $this->uri);
+      $routes_name[$this->name] = preg_replace('/\/\{.*/', '' , $uri);
     }
   }
 }
