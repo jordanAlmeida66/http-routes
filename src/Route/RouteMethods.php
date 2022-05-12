@@ -14,13 +14,13 @@ class RouteMethods
     $this->http_method = $http_method;
   }
 
-  public function controller(string $controller, string $action) : self
+  public function controller(string $controller, string $action, $absolutive_path = false) : self
   {
     $base_controller = "App\\Controller\\";
 
-    $controller = preg_match('/\\\/', $controller) ? $controller : $base_controller.$controller;
+    $controller = $absolutive_path ? $controller : $base_controller.$controller;
     
-    $this->arr['controller'] = ['controller' =>  $controller, 'action' =>$action];
+    $this->arr['controller'] = ['controller' =>  $controller, 'action' => $action];
     
     return $this;
   }
