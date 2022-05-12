@@ -11,7 +11,13 @@ class Bootstrap
 
   public function __construct(Route $rotas, string $url_base)
   {
-    $this->url_base = $url_base;
+    $r = filter_var($url_base, FILTER_VALIDATE_URL);
+
+    if (!$r) {
+      throw new BootstrapException("url base inválida", 500);
+    }
+
+    $this->url_base = preg_replace('/\/$/','',$r);
 
     foreach ($rotas->getAllRoutes() as $key => $params) {
       $params->get($this->routes, $this->routes_name);
@@ -24,9 +30,9 @@ class Bootstrap
   {
     //PARSE URL BASE, SEPARANDO O ROTAS, SCHEMA, E O PATH
     $url_parse = parse_url($this->url_base); 
-
+   
     //VERFICA SE A URL BASE POSSUI ALGUM PATH
-    $path_url = $url_parse['path'] ?? $this->url_base;
+    $path_url = $url_parse['path'] ?? $url_parse['host'];
 
     //URI SOLICITADA PELO USER
     $uri = $_SERVER['REQUEST_URI'];
@@ -39,11 +45,12 @@ class Bootstrap
 
     //obtendo o path digitado pelo cliente
     $path = str_replace($path_url, '', $path_uri);
-    $path = preg_replace("/\/$/", '', $path);
-    if ($path == '') {
-      $path = '/';
-    }
 
+    if ($path != '/') {
+      $path = preg_replace("/\/$/", '', $path);
+    }   
+
+    //decodifica caracteres da url para seus respectivos  valores originas. ex: decodifca caracteres acentuados que são modificados na url
     $path = urldecode($path);
     
     //mapear as rota e substituir possiveis indices por regex
@@ -60,7 +67,7 @@ class Bootstrap
 
           if ($r) {
             //argumento opcional     
-            $arr[$value] = '/?(.+?)?';
+            $arr[$value] = '(?:/([^/]+))?';
             //obs: validações e filtros devem ser realizados por conta própria
           } else {
             //argumento obrigatório
@@ -68,7 +75,7 @@ class Bootstrap
             
             if ($r1) {
               //obs: validações e filtros devem ser realizados por conta própria
-              $arr[$value] = '/([á-ùÁ-Ù\-\_\w]*)';
+              $arr[$value] = '(?:/([^/]+))';
             }
           }          
         }
@@ -83,10 +90,6 @@ class Bootstrap
       return $uri;
     }, array_keys($this->routes));
 
-    // echo '<pre>';
-    // print_r($this->routes);
-    // echo '</pre>'; die();
-
     //percorrer todas as rotas e verificar se a uri informado pelo usuario existe
     foreach ($r as $key => $pattern) {
       /*path : uri digitada pelo usuario
@@ -94,7 +97,7 @@ class Bootstrap
       * matches : rota n oprimeiro indice e parametros da rota forncido pelo usuario, se houver
       */
       $a = preg_match('/^'.$pattern.'$/', $path, $matches);
-
+      
       if($a) {
         //uri encontrada
 
@@ -105,7 +108,6 @@ class Bootstrap
         $is_args = preg_match_all('/\/\{\??([a-z\-\_0-9]+)\}/i', $rota, $params_route);
 
         if($is_args){
-
           $params_route = $params_route[1];
           //a rota possui parametros adcionais
 
@@ -134,16 +136,15 @@ class Bootstrap
           if ($http_method == strtoupper($method)) {
 
             //funcoes que podem ser utilizadas pelo controlador ou callback
-            function getUriByName(string $route)
+            $getUriByName = function(string $route)
             {    
-              return array_key_exists($route, $this->routes_name) ? $this->routes_name[$route] : die("rota nomeada '{$route}' inesistente");
-            }
+              return array_key_exists($route, $this->routes_name) ? $this->routes_name[$route] : throw new BootstrapException("rota nomeada '{$route}' inesistente");
+            };
 
             if (isset($att['callback'])) {
-
               //callback
               
-              $response = isset($args) ? $att['callback']($args) : $att['callback']();
+              $response = isset($args) ? $att['callback']($getUriByName, $args) : $att['callback']($getUriByName);
 
               is_null($response) ? die() :'';
 
@@ -159,7 +160,7 @@ class Bootstrap
               $controller = $att['controller']['controller'];
               $action = $att['controller']['action'];
 
-              $c = new $controller;
+              $c = new $controller($getUriByName);
               $response = isset($args) ? $c->$action($args): $c->$action();
 
               is_null($response) ? die() :'';
