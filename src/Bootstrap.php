@@ -39,6 +39,12 @@ class Bootstrap
 
     //obtendo o path digitado pelo cliente
     $path = str_replace($path_url, '', $path_uri);
+    $path = preg_replace("/\/$/", '', $path);
+    if ($path == '') {
+      $path = '/';
+    }
+
+    $path = urldecode($path);
     
     //mapear as rota e substituir possiveis indices por regex
     $r = array_map(function($uri){ 
@@ -54,7 +60,7 @@ class Bootstrap
 
           if ($r) {
             //argumento opcional     
-            $arr[$value] = '/?(.+)?';
+            $arr[$value] = '/?(.+?)?';
             //obs: validações e filtros devem ser realizados por conta própria
           } else {
             //argumento obrigatório
@@ -62,7 +68,7 @@ class Bootstrap
             
             if ($r1) {
               //obs: validações e filtros devem ser realizados por conta própria
-              $arr[$value] = '/(.+)';
+              $arr[$value] = '/([á-ùÁ-Ù\-\_\w]*)';
             }
           }          
         }
@@ -76,6 +82,10 @@ class Bootstrap
       $uri = preg_replace('/\//', '\/', $uri);
       return $uri;
     }, array_keys($this->routes));
+
+    // echo '<pre>';
+    // print_r($this->routes);
+    // echo '</pre>'; die();
 
     //percorrer todas as rotas e verificar se a uri informado pelo usuario existe
     foreach ($r as $key => $pattern) {
