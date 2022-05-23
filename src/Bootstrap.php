@@ -1,20 +1,33 @@
 <?php 
 namespace HttpRoutes;
 use HttpRoutes\Route;
+use HttpRoutes\Route\RouteInit;
 use HttpRoutes\Exception\BootstrapException;
 
 class Bootstrap
 {
+  /** @var array Contem todas as rotas com seus respectivos atributos */
   private $routes = [];
+  /** @var array Contem todas as rotas nomeadas */
   private $routes_name = [];
+  /** @var string Url base do projeto */
   private $url_base;
+  /** @var array funções que podem ser utilizados pelos controllers ou callback */
+  private $functions = [];
 
+  /**
+   * Bob the constructor.
+   * Inicializa o core, obtem todas as rotas e rotas nomeadas
+   *
+   * @param Routes $rotas Contem o objeto Routes que será utilizado para obter as rotas
+   * @param string $url_base url base do projeto
+   */
   public function __construct(Route $rotas, string $url_base)
   {
     $r = filter_var($url_base, FILTER_VALIDATE_URL);
 
     if (!$r) {
-      throw new BootstrapException("url base inválida", 500);
+      throw new BootstrapException("url base inválida");
     }
 
     $this->url_base = preg_replace('/\/$/','',$r);
@@ -23,7 +36,16 @@ class Bootstrap
       $params->get($this->routes, $this->routes_name);
     }
 
+    $this->functions();
     $this->init();
+  }
+
+  private function functions() : void
+  {
+    //funcoes que podem ser utilizadas pelo controlador ou callback
+    $this->functions['getUriByName'] =  function(string $route, $absolute = true) {    
+      return array_key_exists($route, $this->routes_name) ? ($absolute ? $this->url_base : '').$this->routes_name[$route] : throw new BootstrapException("rota nomeada '{$route}' inesistente");
+    }; 
   }
 
   private function init()
@@ -52,6 +74,7 @@ class Bootstrap
 
     //decodifica caracteres da url para seus respectivos  valores originas. ex: decodifca caracteres acentuados que são modificados na url
     $path = urldecode($path);
+    
     
     //mapear as rota e substituir possiveis indices por regex
     $r = array_map(function($uri){ 
@@ -107,6 +130,9 @@ class Bootstrap
         //agrs da rota
         $is_args = preg_match_all('/\/\{\??([a-z\-\_0-9]+)\}/i', $rota, $params_route);
 
+        $route_init = new RouteInit;
+        $route_init->setFunction($this->functions);
+
         if($is_args){
           $params_route = $params_route[1];
           //a rota possui parametros adcionais
@@ -124,6 +150,7 @@ class Bootstrap
 
           //argumento da rota de acordo com o id informado em 'routes.php'
           $args = array_combine($params_route, $params_in);
+          $route_init->setArguments($args);
         }   
 
         //verificar o método
@@ -134,41 +161,20 @@ class Bootstrap
           $http_method = $_SERVER['REQUEST_METHOD'];
           
           if ($http_method == strtoupper($method)) {
+            
 
-            //funcoes que podem ser utilizadas pelo controlador ou callback
-            $getUriByName = function(string $route)
-            {    
-              return array_key_exists($route, $this->routes_name) ? $this->routes_name[$route] : throw new BootstrapException("rota nomeada '{$route}' inesistente");
-            };
-
-            if (isset($att['callback'])) {
-              //callback
-              
-              $response = isset($args) ? $att['callback']($getUriByName, $args) : $att['callback']($getUriByName);
-
-              is_null($response) ? die() :'';
-
-              if (is_array($response)) {
-                header('Content-Type: application/json');
-                die(json_encode($response));
-              }
-                 
-              die($response); 
-            } else if (isset($att['controller']) ) {
-              //controller
-
-              $controller = $att['controller']['controller'];
-              $action = $att['controller']['action'];
-
-              $c = new $controller($getUriByName);
-              $response = isset($args) ? $c->$action($args): $c->$action();
-
-              is_null($response) ? die() :'';
-
-              is_array($response) ? die(json_encode($response)) : '';
-                 
-              die($response); 
+            if (isset($att['middleware'])) {
+              //executar os middlewares
+              $route_init->setMiddleware($att['middleware']);
             }
+            
+            if (isset($att['callback'])) {
+              $route_init->setCallback($att['callback']);
+            } else if (isset($att['controller']) ) {
+             $route_init->setController($att['controller']['controller'], $att['controller']['action']); 
+            }
+
+            $route_init->run();
           }
         }
         
@@ -179,5 +185,5 @@ class Bootstrap
 
     //pagina não encontrada
     throw new BootstrapException('Not Found', 404);
-  }
+  } 
 }
