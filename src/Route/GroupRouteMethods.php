@@ -21,12 +21,24 @@ class GroupRouteMethods
 
   public function path(string $path)
   {
+    // $path = preg_replace('/^\//', '', preg_replace('/\/$/', '',$path) );
+ 
     foreach($this->routes as $routes) {
       $routes->uri = $path.$routes->uri;
     }
 
     return $this;
   }
+
+  public function middleware($arr, $namespace = 'App\Middleware\\')
+  {
+    foreach($this->routes as $key => $routes) {
+      $routes->middleware($arr, $namespace);
+    }
+
+    return $this;
+  }
+
 
   public function getAllRoutes()
   {

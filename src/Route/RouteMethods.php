@@ -12,6 +12,7 @@ class RouteMethods
   {
     $this->uri = $uri; 
     $this->http_method = $http_method;
+    $this->arr['middleware'] = [];
   }
 
   public function controller(string $controller, string $action, $absolutive_path = false) : self
@@ -22,6 +23,17 @@ class RouteMethods
     
     $this->arr['controller'] = ['controller' =>  $controller, 'action' => $action];
     
+    return $this;
+  }
+
+  public function middleware(array $middlewares, string $namespace = 'App\Middleware\\') : self
+  {
+    foreach ($middlewares as $class => $methods) {
+      foreach ($methods as $key => $method) {
+        $this->arr['middleware'][] = [$namespace.$class => $method];
+      }
+    }
+
     return $this;
   }
 
@@ -42,6 +54,7 @@ class RouteMethods
   public function get(&$routes, &$routes_name)
   {
     $uri = preg_replace('/^\//', '', $this->uri);
+    $uri = preg_replace('/\/$/', '', $uri);
     $uri = "/{$uri}"; 
 
     $routes[$uri][$this->http_method] = $this->arr;
