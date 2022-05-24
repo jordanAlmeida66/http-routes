@@ -1,6 +1,6 @@
 {
     "name": "jordan/http-routes",
-    "description": "abstração de rotas http com url amigável",
+    "description": "Simples roteador http com ulr amigável",
     "type": "library",
     "license": "MIT",
     "authors": [
@@ -10,7 +10,6 @@
         }
     ],
     "minimum-stability": "stable",
-    "require": {},
     "autoload" : {
       "psr-4" : {
         "HttpRoutes\\" :  "src/"

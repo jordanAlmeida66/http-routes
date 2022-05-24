@@ -46,6 +46,6 @@ try {
   if ($e->getCode() == 404 | $e->getCode() == 405) {
     die($e->getMessage());
   } else {
-    die("Ocorreu um erro inesperado, lamentamos ocorrido.<br> Detalhes DEBUG: '{$e->getMessage()}'");
+    die("Ocorreu um erro inesperado, lamentamos o ocorrido.<br>Detalhes DEBUG: '{$e->getMessage()}'");
   }
 }
