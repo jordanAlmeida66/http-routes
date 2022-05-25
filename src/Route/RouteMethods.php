@@ -26,11 +26,17 @@ class RouteMethods
     return $this;
   }
 
-  public function middleware(array $middlewares, string $namespace = 'App\Middleware\\') : self
+  public function middleware(array $middlewares,  bool $prioridade = false, string $namespace = 'App\Middleware\\') : self
   {
     foreach ($middlewares as $class => $methods) {
       foreach ($methods as $key => $method) {
-        $this->arr['middleware'][] = [$namespace.$class => $method];
+        if($prioridade){
+          //Adciona o elemento no início do array
+          array_unshift($this->arr['middleware'], [$namespace.$class => $method]);
+        } else {
+          //Adciona o elemento no final do array
+          array_push($this->arr['middleware'], [$namespace.$class => $method]);
+        }
       }
     }
 

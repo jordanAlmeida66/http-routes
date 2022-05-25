@@ -30,10 +30,10 @@ class GroupRouteMethods
     return $this;
   }
 
-  public function middleware($arr, $namespace = 'App\Middleware\\')
+  public function middleware(array $middlewares,  bool $prioridade = false, string $namespace = 'App\Middleware\\') : self
   {
     foreach($this->routes as $key => $routes) {
-      $routes->middleware($arr, $namespace);
+      $routes->middleware($middlewares, $prioridade, $namespace);
     }
 
     return $this;
