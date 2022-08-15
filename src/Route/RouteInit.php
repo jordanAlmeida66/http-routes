@@ -72,11 +72,14 @@ class RouteInit
       $m = new $class;
 
       $r = $m->$action();
+  
+      if (is_array($r)) {
+        header('Content-Type: application/json');
+        die(json_encode($r));
 
-      is_null($r) ? '' : 
-      (is_array($r) ? die(json_encode($r)) : die($r));
-
-      //echo "passou na validação do middleware {$class} $action<br>";
+      } else if (!is_null($r)) {
+        die($r);
+      }  
     }  
   }
 
@@ -101,7 +104,10 @@ class RouteInit
 
     is_null($response) ? die() :'';
 
-    is_array($response) ? die(json_encode($response)) : '';
+    if (is_array($response)) {
+      header('Content-Type: application/json');
+      die(json_encode($response));
+    }
        
     die($response); 
   } 
